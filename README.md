@@ -1,4 +1,4 @@
-# YOLO Annotator (Electron Desktop App)
+# CTRL Annotator (Desktop App)
 
 A desktop image annotation tool for YOLO object detection models.
 
