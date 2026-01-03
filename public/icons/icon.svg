@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#1a1a1a"/>
+  <rect x="80" y="120" width="200" height="150" fill="none" stroke="#4a9eff" stroke-width="16" rx="8"/>
+  <rect x="232" y="242" width="200" height="150" fill="none" stroke="#4caf50" stroke-width="16" rx="8"/>
+  <circle cx="140" cy="180" r="20" fill="#ff6b6b"/>
+  <circle cx="292" cy="302" r="20" fill="#ffeaa7"/>
+  <text x="256" y="480" text-anchor="middle" fill="#e0e0e0" font-family="Arial" font-size="48" font-weight="bold">YOLO</text>
+</svg>
