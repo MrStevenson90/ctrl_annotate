@@ -1,170 +1,236 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
-  <title>YOLO Annotator</title>
-  <link rel="stylesheet" href="css/styles.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTRL Annotate v1.2</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
 </head>
 <body>
-  <div class="app-container">
-    
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <h1>YOLO Annotator</h1>
-      
-      <!-- Folder Selection -->
-      <section class="panel">
-        <h3>📁 Image Folder</h3>
-        <button id="btn-browse" class="browse-btn">📂 Select Folder</button>
-        <div class="folder-display" id="folder-display">No folder selected</div>
-        <span id="folder-status"></span>
-      </section>
-      
-      <!-- Class Management -->
-      <section class="panel">
-        <h3>🏷️ Classes</h3>
-        <div class="class-list" id="class-list"></div>
-        <div class="class-add">
-          <input type="text" id="new-class" placeholder="Add class...">
-          <button id="btn-add-class">+</button>
-        </div>
-        <div class="current-class">
-          Active: <span id="active-class">None</span>
-        </div>
-      </section>
-      
-      <!-- Tools -->
-      <section class="panel">
-        <h3>🔧 Tools</h3>
-        <div class="toolbar">
-          <button id="tool-bbox" class="tool-btn active" title="Bounding Box [B]">☐ BBox</button>
-          <button id="tool-pan" class="tool-btn" title="Pan [Space]">✋ Pan</button>
-        </div>
-        <div class="toolbar">
-          <button id="btn-repeat" title="Repeat last annotation">🔁 Repeat</button>
-          <button id="btn-undo" title="Undo [Ctrl+Z]">↩ Undo</button>
-          <button id="btn-redo" title="Redo [Ctrl+Y]">↪ Redo</button>
-        </div>
-      </section>
-      
-      <!-- Export Filters -->
-      <section class="panel">
-        <h3>🎨 Export Filters</h3>
-        <div class="filter-control">
-          <label>Brightness: <span id="v-brightness">1.0</span></label>
-          <input type="range" id="filter-brightness" min="0.5" max="2.0" step="0.1" value="1.0">
-        </div>
-        <div class="filter-control">
-          <label>Saturation: <span id="v-saturation">1.0</span></label>
-          <input type="range" id="filter-saturation" min="0.0" max="2.0" step="0.1" value="1.0">
-        </div>
-        <div class="filter-control">
-          <label>Exposure: <span id="v-exposure">1.0</span></label>
-          <input type="range" id="filter-exposure" min="0.5" max="2.0" step="0.1" value="1.0">
-        </div>
-        <div class="filter-control">
-          <label>Blur: <span id="v-blur">0</span></label>
-          <input type="range" id="filter-blur" min="0" max="5" step="0.5" value="0">
-        </div>
-        <div class="filter-control">
-          <label><input type="checkbox" id="filter-grayscale"> Grayscale</label>
-        </div>
-      </section>
-      
-      <!-- Export Settings -->
-      <section class="panel">
-        <h3>📦 Export</h3>
-        <div class="export-control">
-          <label>Model Preset:</label>
-          <select id="model-preset">
-            <option value="yolov5s">YOLOv5 (640)</option>
-            <option value="yolov5_416">YOLOv5 (416)</option>
-            <option value="yolov8n" selected>YOLOv8 (640)</option>
-            <option value="yolov8_1280">YOLOv8 (1280)</option>
-            <option value="yolov11n">YOLOv11 (640)</option>
-          </select>
-        </div>
-        <div class="export-control">
-          <label>Train/Val Split: <span id="v-split">80</span>%</label>
-          <input type="range" id="train-split" min="50" max="100" step="5" value="80">
-        </div>
-        <div class="export-buttons">
-          <button id="btn-validate" class="secondary">🔍 Validate</button>
-          <button id="btn-export" class="primary">⬇ Export ZIP</button>
-        </div>
-      </section>
-      
-      <!-- Navigation -->
-      <section class="panel">
-        <h3>🖼️ Navigation</h3>
-        <button id="btn-gallery">📊 View Gallery</button>
-        <div class="nav-info">
-          <span id="img-counter">0 / 0</span>
-        </div>
-        <div class="nav-buttons">
-          <button id="btn-prev">← Prev</button>
-          <button id="btn-next">Next →</button>
-        </div>
-      </section>
-    </aside>
-    
-    <!-- Main Workspace -->
-    <main class="workspace">
-      <!-- Editor View -->
-      <div id="editor-view">
-        <div id="canvas-container">
-          <canvas id="canvas"></canvas>
-        </div>
-        <footer class="status-bar">
-          <span id="status-file">No image loaded</span>
-          <span id="status-coords">X: 0, Y: 0</span>
-          <span id="status-zoom">Zoom: 100%</span>
-          <span id="status-save">●</span>
-        </footer>
-      </div>
-      
-      <!-- Gallery View -->
-      <div id="gallery-view" class="hidden">
-        <header class="gallery-header">
-          <h2>Project Gallery</h2>
-          <div class="gallery-stats">
-            <span id="stat-total">0 images</span>
-            <span id="stat-annotated">0 annotated</span>
-            <span id="stat-pending">0 pending</span>
-          </div>
-          <button id="btn-back-editor">← Back to Editor</button>
-        </header>
-        <div class="gallery-grid" id="gallery-container"></div>
-      </div>
-      
-      <!-- Validation Modal -->
-      <div id="validation-modal" class="modal hidden">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <header class="sidebar-header">
+                <h1>CTRL Annotate</h1>
+                <!-- Model Preset Selector - Moved to top -->
+                <div class="model-selector">
+                    <select id="model-preset" title="Select target model">
+                        <optgroup label="YOLO Models">
+                            <option value="yolov5s">YOLOv5 (640)</option>
+                            <option value="yolov5_416">YOLOv5 (416)</option>
+                            <option value="yolov8n" selected>YOLOv8 (640)</option>
+                            <option value="yolov8_1280">YOLOv8 (1280)</option>
+                            <option value="yolov11n">YOLOv11 (640)</option>
+                        </optgroup>
+                        <optgroup label="SAM2 Format">
+                            <option value="sam2">SAM2 Training</option>
+                        </optgroup>
+                    </select>
+                    <div class="export-format-badge" id="export-format-badge">YOLO</div>
+                </div>
+            </header>
+
+            <!-- Folder Panel -->
+            <div class="panel" id="folder-panel">
+                <h3>📁 Image Folder</h3>
+                <button class="browse-btn" id="btn-browse">Select Folder</button>
+                <div class="folder-display" id="folder-display">No folder selected</div>
+                <div id="folder-status"></div>
+            </div>
+
+            <!-- Tools Panel -->
+            <div class="panel">
+                <h3>🔧 Tools</h3>
+                <div class="toolbar">
+                    <button class="tool-btn active" id="tool-bbox" title="Bounding Box (B)">BBox</button>
+                    <button class="tool-btn" id="tool-magic" title="Magic Select (M)" disabled>Magic</button>
+                    <button class="tool-btn" id="tool-pan" title="Pan (Space)">Pan</button>
+                </div>
+                <div class="toolbar">
+                    <button id="btn-repeat" title="Repeat last annotation">Repeat</button>
+                    <button id="btn-undo" disabled>Undo</button>
+                    <button id="btn-redo" disabled>Redo</button>
+                </div>
+            </div>
+
+            <!-- Classes Panel -->
+            <div class="panel">
+                <h3>🏷️ Classes</h3>
+                <div class="class-list" id="class-list"></div>
+                <div class="class-add">
+                    <input type="text" id="new-class" placeholder="New class name">
+                    <button id="btn-add-class">+</button>
+                </div>
+                <div class="current-class">Active: <span id="active-class">None</span></div>
+            </div>
+
+            <!-- SAM Panel -->
+            <div class="panel" id="sam-panel">
+                <h3>✨ SAM Magic Select</h3>
+                <div id="sam-status">Checking models...</div>
+                <div class="sam-controls hidden" id="sam-controls">
+                    <label>
+                        <input type="checkbox" id="sam-auto-embed" checked>
+                        Auto-embed on image load
+                    </label>
+                    <label>
+                        <input type="checkbox" id="sam-hover-preview" checked>
+                        Hover preview (slower)
+                    </label>
+                    <div class="threshold-control">
+                        <label>Confidence: <span id="sam-threshold-value">0.5</span></label>
+                        <input type="range" id="sam-threshold" min="0" max="100" value="50">
+                    </div>
+                    
+                    <!-- Group Mode Toggle -->
+                    <div class="group-mode-control" id="group-mode-control">
+                        <label class="group-mode-label">Selection Mode:</label>
+                        <div class="group-mode-toggle">
+                            <button class="mode-btn active" id="mode-individual" title="Each click creates separate annotation">Individual</button>
+                            <button class="mode-btn" id="mode-group" title="Shift+Click to combine multiple areas (Enter to confirm)">Group</button>
+                        </div>
+                        <div class="group-mode-hint" id="group-mode-hint"></div>
+                    </div>
+                    
+                    <button id="btn-embed" class="secondary">Re-embed Image</button>
+                </div>
+            </div>
+
+            <!-- Filters Panel -->
+            <div class="panel">
+                <h3>🎨 Filters</h3>
+                <div class="filter-control">
+                    <label>Brightness <span id="v-brightness">1.0</span></label>
+                    <input type="range" id="filter-brightness" min="0.5" max="2" step="0.1" value="1">
+                </div>
+                <div class="filter-control">
+                    <label>Saturation <span id="v-saturation">1.0</span></label>
+                    <input type="range" id="filter-saturation" min="0" max="2" step="0.1" value="1">
+                </div>
+                <div class="filter-control">
+                    <label>Exposure <span id="v-exposure">1.0</span></label>
+                    <input type="range" id="filter-exposure" min="0.5" max="2" step="0.1" value="1">
+                </div>
+                <div class="filter-control">
+                    <label>Blur <span id="v-blur">0</span></label>
+                    <input type="range" id="filter-blur" min="0" max="5" step="0.5" value="0">
+                </div>
+                <div class="filter-control">
+                    <label><input type="checkbox" id="filter-grayscale"> Grayscale</label>
+                </div>
+            </div>
+
+            <!-- Export Panel -->
+            <div class="panel">
+                <h3>📦 Export</h3>
+                
+                <!-- Split Controls -->
+                <div class="export-control">
+                    <label>Train/Val/Test Split</label>
+                    <div class="split-display">
+                        <span class="split-label train">Train: <span id="v-train">70</span>%</span>
+                        <span class="split-label val">Val: <span id="v-val">20</span>%</span>
+                        <span class="split-label test">Test: <span id="v-test">10</span>%</span>
+                    </div>
+                    <div class="split-sliders">
+                        <div class="split-slider-row">
+                            <span class="slider-label">Train</span>
+                            <input type="range" id="split-train" min="50" max="90" value="70">
+                        </div>
+                        <div class="split-slider-row">
+                            <span class="slider-label">Val</span>
+                            <input type="range" id="split-val" min="5" max="40" value="20">
+                        </div>
+                    </div>
+                    <div class="split-hint">Test % is calculated from remainder</div>
+                </div>
+                
+                <div class="export-buttons">
+                    <button id="btn-validate" class="secondary">Validate</button>
+                    <button id="btn-export" class="primary">Export ZIP</button>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="panel">
+                <h3>🖼️ Navigation</h3>
+                <div class="nav-info">
+                    <span id="img-counter">0 / 0</span>
+                </div>
+                <div class="nav-buttons">
+                    <button id="btn-prev">← Prev</button>
+                    <button id="btn-gallery">Gallery</button>
+                    <button id="btn-next">Next →</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Workspace -->
+        <main class="workspace">
+            <!-- Editor View -->
+            <div id="editor-view">
+                <div id="canvas-container">
+                    <canvas id="canvas"></canvas>
+                    <!-- Overlay Canvas for SAM hover preview -->
+                    <canvas id="overlay-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Gallery View -->
+            <div id="gallery-view" class="hidden">
+                <div class="gallery-header">
+                    <h2>Image Gallery</h2>
+                    <div class="gallery-stats">
+                        <span>Total: <strong id="stat-total">0</strong></span>
+                        <span>Annotated: <strong id="stat-annotated">0</strong></span>
+                        <span>Pending: <strong id="stat-pending">0</strong></span>
+                    </div>
+                    <button id="btn-back-editor">← Back to Editor</button>
+                </div>
+                <div class="gallery-grid" id="gallery-grid">
+                    <div class="loading">Loading images...</div>
+                </div>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span id="status-file">No image loaded</span>
+                <span id="status-coords">X: 0, Y: 0</span>
+                <span id="status-zoom">Zoom: 100%</span>
+                <span id="status-sam">SAM: --</span>
+                <span id="status-save">●</span>
+            </div>
+        </main>
+    </div>
+
+    <!-- Validation Modal -->
+    <div class="modal hidden" id="validation-modal">
         <div class="modal-content">
-          <header>
-            <h3>Validation Preview</h3>
-            <button id="btn-close-modal">✕</button>
-          </header>
-          <div class="validation-image">
-            <img id="validation-img" src="" alt="Validation Preview">
-          </div>
-          <p class="validation-info">Bounding boxes shown on letterboxed image at export resolution.</p>
+            <header>
+                <h3>Validation Preview</h3>
+                <button id="btn-close-modal">✕</button>
+            </header>
+            <div class="validation-image">
+                <img id="validation-img" src="" alt="Validation preview">
+            </div>
+            <div class="validation-info">
+                <span id="validation-info-text"></span>
+            </div>
         </div>
-      </div>
-    </main>
-  </div>
-  
-  <!-- Scripts -->
-  <script src="js/state.js"></script>
-  <script src="js/history.js"></script>
-  <script src="js/classes.js"></script>
-  <script src="js/canvas.js"></script>
-  <script src="js/bbox.js"></script>
-  <script src="js/gallery.js"></script>
-  <script src="js/validator.js"></script>
-  <script src="js/exporter.js"></script>
-  <script src="js/app.js"></script>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/state.js"></script>
+    <script src="js/history.js"></script>
+    <script src="js/classes.js"></script>
+    <script src="js/canvas.js"></script>
+    <script src="js/sam.js"></script>
+    <script src="js/bbox.js"></script>
+    <script src="js/gallery.js"></script>
+    <script src="js/validator.js"></script>
+    <script src="js/exporter.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>

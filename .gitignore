@@ -1,5 +1,17 @@
-echo node_modules/ > .gitignore
-echo dist/ >> .gitignore
-git add .gitignore
-git commit -m "Add gitignore"
-git push
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+
+# SAM models (user-provided, too large for git)
+public/models/*.onnx
+
+# Build artifacts
+*.exe
+*.dmg
+*.AppImage
+
+# IDE
+.vscode/
+.idea/

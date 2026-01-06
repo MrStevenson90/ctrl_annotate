@@ -17,5 +17,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   exportDataset: (data) => ipcRenderer.invoke('export-dataset', data),
   
   // Validation
-  validateImage: (data) => ipcRenderer.invoke('validate-image', data)
+  validateImage: (data) => ipcRenderer.invoke('validate-image', data),
+  
+  // SAM 2 Model Loading
+  loadSAMModel: (modelName) => ipcRenderer.invoke('load-sam-model', modelName),
+  checkSAMModels: () => ipcRenderer.invoke('check-sam-models')
 });

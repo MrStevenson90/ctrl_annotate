@@ -17,6 +17,8 @@
   --success: #4caf50;
   --warning: #ff9800;
   --danger: #f44336;
+  --magic: #a855f7;
+  --magic-hover: #c084fc;
 }
 
 body {
@@ -110,7 +112,7 @@ button {
   transition: all 0.2s;
 }
 
-button:hover {
+button:hover:not(:disabled) {
   background: var(--border);
 }
 
@@ -120,7 +122,7 @@ button.primary {
   color: #fff;
 }
 
-button.primary:hover {
+button.primary:hover:not(:disabled) {
   background: var(--accent-hover);
 }
 
@@ -176,6 +178,17 @@ button:disabled {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
+}
+
+/* Magic tool specific styling */
+#tool-magic.active {
+  background: var(--magic);
+  border-color: var(--magic);
+}
+
+#tool-magic:hover:not(:disabled):not(.active) {
+  border-color: var(--magic);
+  color: var(--magic);
 }
 
 /* ============ CLASS LIST ============ */
@@ -251,6 +264,93 @@ button:disabled {
   font-weight: bold;
 }
 
+/* ============ SAM 2 PANEL ============ */
+#sam-panel #sam-status {
+  font-size: 0.85rem;
+  padding: 8px;
+  background: var(--bg-dark);
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.sam-controls {
+  margin-top: 8px;
+}
+
+.sam-controls.hidden {
+  display: none;
+}
+
+.sam-controls label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.sam-controls label:hover {
+  color: var(--text);
+}
+
+.sam-controls button {
+  width: 100%;
+  margin-top: 5px;
+}
+
+/* ============ GROUP MODE TOGGLE ============ */
+.group-mode-control {
+  margin: 12px 0;
+  padding: 10px;
+  background: var(--bg-dark);
+  border-radius: 4px;
+}
+
+.group-mode-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.group-mode-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+.group-mode-toggle .mode-btn {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 0.75rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  transition: all 0.2s;
+}
+
+.group-mode-toggle .mode-btn:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.group-mode-toggle .mode-btn.active {
+  background: var(--magic);
+  border-color: var(--magic);
+  color: #fff;
+}
+
+.group-mode-hint {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-top: 6px;
+  min-height: 1.2em;
+  font-style: italic;
+}
+
+.group-mode-hint.active {
+  color: var(--success);
+}
+
 /* ============ FILTER CONTROLS ============ */
 .filter-control {
   margin-bottom: 10px;
@@ -273,7 +373,7 @@ button:disabled {
   margin-bottom: 10px;
 }
 
-.export-control label {
+.export-control > label {
   display: block;
   font-size: 0.8rem;
   color: var(--text-dim);
@@ -288,6 +388,66 @@ button:disabled {
 
 .export-buttons button {
   flex: 1;
+}
+
+/* ============ SPLIT CONTROLS ============ */
+.split-display {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 8px;
+  background: var(--bg-dark);
+  border-radius: 4px;
+}
+
+.split-label {
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.split-label.train {
+  background: var(--success);
+  color: #fff;
+}
+
+.split-label.val {
+  background: var(--accent);
+  color: #fff;
+}
+
+.split-label.test {
+  background: var(--warning);
+  color: #000;
+}
+
+.split-sliders {
+  margin-bottom: 5px;
+}
+
+.split-slider-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.split-slider-row .slider-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  width: 45px;
+  flex-shrink: 0;
+}
+
+.split-slider-row input[type="range"] {
+  flex: 1;
+  margin: 0;
+}
+
+.split-hint {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  font-style: italic;
 }
 
 /* ============ NAVIGATION ============ */
@@ -328,6 +488,10 @@ button:disabled {
   cursor: grabbing;
 }
 
+#canvas-container.magic-mode {
+  cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="%23a855f7" opacity="0.5"/><circle cx="12" cy="12" r="3" fill="%23a855f7"/></svg>') 12 12, crosshair;
+}
+
 /* ============ STATUS BAR ============ */
 .status-bar {
   display: flex;
@@ -337,6 +501,17 @@ button:disabled {
   border-top: 1px solid var(--border);
   font-size: 0.8rem;
   color: var(--text-dim);
+  gap: 15px;
+}
+
+.status-bar span {
+  white-space: nowrap;
+}
+
+#status-file {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 #status-save {
@@ -345,6 +520,10 @@ button:disabled {
 
 #status-save.unsaved {
   color: var(--warning);
+}
+
+#status-sam {
+  color: var(--magic);
 }
 
 /* ============ GALLERY ============ */
@@ -437,6 +616,12 @@ button:disabled {
   background: var(--warning);
 }
 
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-dim);
+}
+
 /* ============ MODAL ============ */
 .modal {
   position: fixed;
@@ -518,4 +703,21 @@ button:disabled {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* ============ ANIMATIONS ============ */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.processing {
+  animation: pulse 1s infinite;
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 1200px) {
+  .sidebar {
+    width: 260px;
+  }
 }

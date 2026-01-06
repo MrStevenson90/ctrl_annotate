@@ -11,6 +11,9 @@ const USER_DATA_PATH = app.getPath('userData');
 const ANNOTATIONS_PATH = path.join(USER_DATA_PATH, 'annotations.json');
 const OUTPUT_PATH = path.join(USER_DATA_PATH, 'output');
 
+// SAM Models path (relative to app)
+const MODELS_PATH = path.join(__dirname, 'public', 'models');
+
 // Current state
 let currentImageFolder = null;
 
@@ -188,6 +191,52 @@ ipcMain.handle('validate-image', async (event, { imageName, annotations, config 
     };
   } catch (err) {
     return { success: false, error: err.message };
+  }
+});
+
+// ============ SAM 2 MODEL HANDLERS ============
+
+// Check if SAM models exist
+ipcMain.handle('check-sam-models', async () => {
+  const encoderPath = path.join(MODELS_PATH, 'sam_vit_b-encoder-int8.onnx');
+  const decoderPath = path.join(MODELS_PATH, 'sam_vit_b_decoder.onnx');
+  
+  const encoderExists = await fs.pathExists(encoderPath);
+  const decoderExists = await fs.pathExists(decoderPath);
+  
+  console.log('SAM Models Path:', MODELS_PATH);
+  console.log('Encoder exists:', encoderExists, encoderPath);
+  console.log('Decoder exists:', decoderExists, decoderPath);
+  
+  return {
+    encoder: encoderExists,
+    decoder: decoderExists
+  };
+});
+
+// Load SAM model as Buffer (Electron serializes to Uint8Array in renderer)
+ipcMain.handle('load-sam-model', async (event, modelName) => {
+  try {
+    const modelPath = path.join(MODELS_PATH, modelName);
+    
+    if (!await fs.pathExists(modelPath)) {
+      console.error('Model not found:', modelPath);
+      return null;
+    }
+    
+    console.log('Loading SAM model:', modelPath);
+    
+    // Read file as buffer
+    const buffer = await fs.readFile(modelPath);
+    
+    console.log('Model loaded, size:', buffer.length, 'bytes');
+    
+    // Return buffer directly - Electron serializes it as Uint8Array in renderer
+    // ONNX Runtime accepts Uint8Array directly
+    return buffer;
+  } catch (err) {
+    console.error('Failed to load SAM model:', err);
+    return null;
   }
 });
 

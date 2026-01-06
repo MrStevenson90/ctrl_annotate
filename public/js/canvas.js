@@ -25,6 +25,7 @@ function initCanvas() {
   fabricCanvas.on('mouse:move', handleMouseMove);
   
   initBboxTool();
+  initGroupModeControls();
 }
 
 function resizeCanvas() {
@@ -85,6 +86,11 @@ async function loadImage(imageName) {
         document.getElementById('status-file').textContent = imageName;
         document.getElementById('status-zoom').textContent = 'Zoom: 100%';
         
+        // Trigger SAM auto-embedding if available and enabled
+        if (typeof autoEmbedIfNeeded === 'function') {
+          autoEmbedIfNeeded(dataUrl);
+        }
+        
         resolve();
       });
     });
@@ -117,9 +123,15 @@ let lastPosX = 0;
 let lastPosY = 0;
 
 function handleKeyDown(e) {
+  // Prevent shortcuts when typing in input fields
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    return;
+  }
+  
   if (e.code === 'Space' && !State.isPanning) {
     State.isPanning = true;
     canvasContainer.classList.add('panning');
+    canvasContainer.classList.remove('magic-mode');
     fabricCanvas.defaultCursor = 'grab';
     fabricCanvas.hoverCursor = 'grab';
     
@@ -130,6 +142,10 @@ function handleKeyDown(e) {
   
   if (e.key === 'b' || e.key === 'B') {
     setTool('bbox');
+  }
+  
+  if (e.key === 'm' || e.key === 'M') {
+    setTool('magic');
   }
   
   if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
@@ -162,8 +178,7 @@ function handleKeyUp(e) {
   if (e.code === 'Space') {
     State.isPanning = false;
     canvasContainer.classList.remove('panning');
-    fabricCanvas.defaultCursor = 'crosshair';
-    fabricCanvas.hoverCursor = 'move';
+    updateCursorForTool();
     
     fabricCanvas.off('mouse:down', startPan);
     fabricCanvas.off('mouse:move', doPan);
@@ -238,11 +253,110 @@ function imageToScreenCoords(imgX, imgY) {
 // ============ TOOL SELECTION ============
 
 function setTool(tool) {
+  // Check if SAM is ready for magic tool
+  if (tool === 'magic' && typeof SAM !== 'undefined' && !SAM.isReady) {
+    console.warn('SAM 2 is not ready yet');
+    return;
+  }
+  
   State.currentTool = tool;
   
   document.querySelectorAll('.tool-btn').forEach(btn => {
     btn.classList.remove('active');
   });
   
-  document.getElementById(`tool-${tool}`).classList.add('active');
+  const toolBtn = document.getElementById(`tool-${tool}`);
+  if (toolBtn) {
+    toolBtn.classList.add('active');
+  }
+  
+  updateCursorForTool();
+  
+  // Update format badge when switching tools
+  updateFormatBadge();
+}
+
+function updateCursorForTool() {
+  canvasContainer.classList.remove('magic-mode');
+  
+  if (State.currentTool === 'magic') {
+    canvasContainer.classList.add('magic-mode');
+    fabricCanvas.defaultCursor = 'crosshair';
+    fabricCanvas.hoverCursor = 'crosshair';
+  } else if (State.currentTool === 'pan') {
+    fabricCanvas.defaultCursor = 'grab';
+    fabricCanvas.hoverCursor = 'grab';
+  } else {
+    fabricCanvas.defaultCursor = 'crosshair';
+    fabricCanvas.hoverCursor = 'move';
+  }
+}
+
+// ============ FORMAT BADGE ============
+
+function updateFormatBadge() {
+  const badge = document.getElementById('export-format-badge');
+  if (!badge) return;
+  
+  const format = getExportFormat();
+  
+  if (format === 'sam2') {
+    badge.textContent = 'SAM2';
+    badge.classList.add('sam2');
+    // Show group mode control for SAM2
+    const groupControl = document.getElementById('group-mode-control');
+    if (groupControl) groupControl.style.display = 'block';
+  } else {
+    badge.textContent = 'YOLO';
+    badge.classList.remove('sam2');
+    // Hide group mode control for YOLO
+    const groupControl = document.getElementById('group-mode-control');
+    if (groupControl) groupControl.style.display = 'none';
+  }
+}
+
+// ============ GROUP MODE CONTROLS ============
+
+function initGroupModeControls() {
+  const individualBtn = document.getElementById('mode-individual');
+  const groupBtn = document.getElementById('mode-group');
+  const hint = document.getElementById('group-mode-hint');
+  
+  if (!individualBtn || !groupBtn) return;
+  
+  individualBtn.addEventListener('click', () => {
+    setGroupMode(false);
+    individualBtn.classList.add('active');
+    groupBtn.classList.remove('active');
+    if (hint) {
+      hint.textContent = '';
+      hint.classList.remove('active');
+    }
+    // Clear any pending group
+    if (typeof cancelGroup === 'function') {
+      cancelGroup();
+    }
+  });
+  
+  groupBtn.addEventListener('click', () => {
+    setGroupMode(true);
+    groupBtn.classList.add('active');
+    individualBtn.classList.remove('active');
+    if (hint) {
+      hint.textContent = 'Shift+Click to add points, Enter to confirm';
+      hint.classList.add('active');
+    }
+  });
+}
+
+function updateGroupModeHint(pointCount) {
+  const hint = document.getElementById('group-mode-hint');
+  if (!hint || !State.groupMode) return;
+  
+  if (pointCount > 0) {
+    hint.textContent = `${pointCount} point(s) selected. Enter to confirm, Esc to cancel`;
+    hint.classList.add('active');
+  } else {
+    hint.textContent = 'Shift+Click to add points, Enter to confirm';
+  }
 }

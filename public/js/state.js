@@ -24,6 +24,12 @@ const State = {
   
   // Last annotation (for repeat)
   lastBox: null,
+  lastSegment: null,
+  
+  // SAM2 Group mode
+  groupMode: false,
+  pendingPoints: [],    // Array of {x, y} click points for multi-point prompt
+  pendingMask: null,    // Current preview mask data
   
   // Filters
   filters: {
@@ -38,7 +44,12 @@ const State = {
   exportConfig: {
     modelPreset: 'yolov8n',
     targetSize: 640,
-    trainRatio: 0.8
+    exportFormat: 'yolo', // 'yolo' or 'sam2'
+    ratios: {
+      train: 0.7,
+      val: 0.2,
+      test: 0.1
+    }
   }
 };
 
@@ -55,8 +66,14 @@ function getCurrentAnnotations() {
   if (!State.annotations[img]) {
     State.annotations[img] = {
       originalSize: { width: 0, height: 0 },
-      boxes: []
+      boxes: [],
+      polygons: []
     };
+  }
+  
+  // Ensure polygons array exists (backwards compatibility)
+  if (!State.annotations[img].polygons) {
+    State.annotations[img].polygons = [];
   }
   
   return State.annotations[img];
@@ -68,6 +85,8 @@ function setOriginalSize(width, height) {
     ann.originalSize = { width, height };
   }
 }
+
+// ============ BOX FUNCTIONS (YOLO) ============
 
 function addBox(box) {
   const ann = getCurrentAnnotations();
@@ -92,6 +111,74 @@ function updateBox(index, updates) {
     Object.assign(ann.boxes[index], updates);
     markUnsaved();
   }
+}
+
+// ============ SEGMENT FUNCTIONS (SAM2) ============
+
+function addSegment(segment) {
+  const ann = getCurrentAnnotations();
+  if (ann) {
+    ann.polygons.push(segment);
+    State.lastSegment = { ...segment };
+    markUnsaved();
+  }
+}
+
+function removeSegment(index) {
+  const ann = getCurrentAnnotations();
+  if (ann && ann.polygons[index]) {
+    ann.polygons.splice(index, 1);
+    markUnsaved();
+  }
+}
+
+function updateSegment(index, updates) {
+  const ann = getCurrentAnnotations();
+  if (ann && ann.polygons[index]) {
+    Object.assign(ann.polygons[index], updates);
+    markUnsaved();
+  }
+}
+
+// ============ EXPORT FORMAT HELPERS ============
+
+function getExportFormat() {
+  const preset = MODEL_PRESETS[State.exportConfig.modelPreset];
+  return preset?.format || 'yolo';
+}
+
+function isYoloFormat() {
+  return getExportFormat() === 'yolo';
+}
+
+function isSam2Format() {
+  return getExportFormat() === 'sam2';
+}
+
+// ============ GROUP MODE HELPERS ============
+
+function setGroupMode(enabled) {
+  State.groupMode = enabled;
+  if (!enabled) {
+    clearPendingPoints();
+  }
+}
+
+function addPendingPoint(x, y) {
+  State.pendingPoints.push({ x, y });
+}
+
+function clearPendingPoints() {
+  State.pendingPoints = [];
+  State.pendingMask = null;
+}
+
+function getPendingPoints() {
+  return State.pendingPoints;
+}
+
+function hasPendingPoints() {
+  return State.pendingPoints.length > 0;
 }
 
 // ============ AUTO-SAVE (via Electron IPC) ============
@@ -136,8 +223,13 @@ async function loadAnnotations() {
       // Extract class list from existing annotations
       const classes = new Set();
       Object.values(State.annotations).forEach(img => {
+        // From boxes
         (img.boxes || []).forEach(box => {
           if (box.label) classes.add(box.label);
+        });
+        // From polygons
+        (img.polygons || []).forEach(seg => {
+          if (seg.label) classes.add(seg.label);
         });
       });
       
@@ -155,14 +247,15 @@ async function loadAnnotations() {
 // ============ MODEL PRESETS ============
 
 const MODEL_PRESETS = {
-  yolov5s: { size: 640, name: 'YOLOv5 (640)' },
-  yolov5_416: { size: 416, name: 'YOLOv5 (416)' },
-  yolov8n: { size: 640, name: 'YOLOv8 (640)' },
-  yolov8_1280: { size: 1280, name: 'YOLOv8 (1280)' },
-  yolov11n: { size: 640, name: 'YOLOv11 (640)' }
+  yolov5s: { size: 640, name: 'YOLOv5 (640)', format: 'yolo' },
+  yolov5_416: { size: 416, name: 'YOLOv5 (416)', format: 'yolo' },
+  yolov8n: { size: 640, name: 'YOLOv8 (640)', format: 'yolo' },
+  yolov8_1280: { size: 1280, name: 'YOLOv8 (1280)', format: 'yolo' },
+  yolov11n: { size: 640, name: 'YOLOv11 (640)', format: 'yolo' },
+  sam2: { size: null, name: 'SAM2 (Polygon)', format: 'sam2' }
 };
 
 function getTargetSize() {
   const preset = MODEL_PRESETS[State.exportConfig.modelPreset];
-  return preset ? preset.size : 640;
+  return preset?.size || 640;
 }

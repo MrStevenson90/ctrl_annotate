@@ -1,7 +1,7 @@
 {
   "name": "yolo-annotator",
-  "version": "1.0.0",
-  "description": "Desktop image annotation tool for YOLO models",
+  "version": "1.1.0",
+  "description": "Desktop image annotation tool for YOLO models with SAM 2 integration",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
