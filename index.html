@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Download CTRL ANNOTATE v1.0</title>
+    <title>Download CTRL ANNOTATE</title>
     <style>
         body {
             background-color: #c0c0c0;
@@ -54,6 +54,14 @@
             font-weight: bold;
             color: #000080;
         }
+        .new-badge {
+            background: #ff0000;
+            color: #fff;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: bold;
+            vertical-align: super;
+        }
         footer {
             margin-top: 30px;
             font-size: 12px;
@@ -69,37 +77,40 @@
 
 <div id="container">
     <div class="marquee-container">
-        <marquee>*** NEW RELEASE: CTRL ANNOTATE V1.0 IS NOW AVAILABLE FOR DOWNLOAD ***</marquee>
+        <marquee>*** CTRL ANNOTATE - NOW WITH SAM2 POLYGON EXPORT AND GROUP SELECTION ***</marquee>
     </div>
 
     <h1>CTRL ANNOTATE</h1>
-    <p><i>The essential utility for YOLO Dataset Preparation.</i></p>
+    <p><i>The essential utility for YOLO &amp; SAM2 Dataset Preparation.</i></p>
 
     <hr>
 
     <h3>What is CTRL ANNOTATE?</h3>
     <p>
-        CTRL ANNOTATE is a high-performance, lightweight annotation tool specifically 
-        designed for <b>YOLO (You Only Look Once)</b> object detection formats. 
+        CTRL ANNOTATE is a high-performance, lightweight annotation tool for 
+        <b>YOLO object detection</b> and <b>SAM2 segmentation</b> models. 
         Stop wasting time with bloated web tools. Run locally, tag fast.
     </p>
 
     <h3>Features:</h3>
     <ul>
+        <li><b>SAM2 Magic Select</b> - One-click AI-powered segmentation <span class="new-badge">NEW</span></li>
+        <li><b>Group Selection</b> - Shift+Click to combine multiple regions <span class="new-badge">NEW</span></li>
+        <li><b>Polygon Export</b> - JSON format for segmentation training <span class="new-badge">NEW</span></li>
         <li>Direct .txt export for YOLOv5, YOLOv8, and YOLOv11.</li>
         <li>Keyboard shortcuts for maximum "Control" (CTRL).</li>
         <li>Native folder selection - scans subfolders automatically.</li>
-        <li>Train/Val split with adjustable ratio.</li>
+        <li>Train/Val/Test split with adjustable ratios.</li>
         <li>Validation preview with letterboxing.</li>
         <li>Auto-save - never lose your work.</li>
         <li>Undo/Redo support.</li>
-        <li>No internet required.</li>
+        <li>WebGPU accelerated (with WASM fallback).</li>
     </ul>
 
     <div class="download-box">
         <p><b>READY TO START TAGGING?</b></p>
-        <a href="https://github.com/MrStevenson90/ctrl_annotate/releases" class="download-link">⬇ DOWNLOAD CTRL ANNOTATE v1.0</a>
-        <p><small>Version 1.0.0 | Windows x64 | 87.4 MB</small></p>
+        <a href="https://github.com/MrStevenson90/ctrl_annotate/releases" class="download-link">⬇ DOWNLOAD CTRL ANNOTATE</a>
+        <p><small>Windows x64 | ~150 MB</small></p>
     </div>
 
     <div class="github-box">
@@ -111,8 +122,9 @@
     <h3>System Requirements:</h3>
     <ul>
         <li>Windows 10 / 11 (x64)</li>
-        <li>4GB RAM minimum</li>
-        <li>200MB disk space</li>
+        <li>4GB RAM minimum (8GB recommended)</li>
+        <li>500MB disk space</li>
+        <li>Internet for first SAM2 model download</li>
     </ul>
 
     <center>
